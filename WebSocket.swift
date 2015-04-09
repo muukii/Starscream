@@ -97,6 +97,7 @@ public class WebSocket : NSObject, NSStreamDelegate {
     private var disconnectedBlock: ((NSError?) -> Void)? = nil
     private var receivedTextBlock: ((String) -> Void)? = nil
     private var receivedDataBlock: ((NSData) -> Void)? = nil
+    private let connectingQueue = dispatch_queue_create("com.github.starscream.socket", nil)
     public var isConnected :Bool {
         return connected
     }
@@ -138,7 +139,7 @@ public class WebSocket : NSObject, NSStreamDelegate {
         if isCreated {
             return
         }
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), {
+        dispatch_async(connectingQueue, {
             self.isCreated = true
             self.createHTTPRequest()
             self.isCreated = false
