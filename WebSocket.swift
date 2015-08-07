@@ -171,7 +171,7 @@ public class WebSocket : NSObject, NSStreamDelegate {
     //private method that starts the connection
     private func createHTTPRequest() {
         
-        let str: NSString = url.absoluteString!
+        let urlString : NSString = url.absoluteString
         let urlRequest = CFHTTPMessageCreateRequest(kCFAllocatorDefault, "GET",
             url, kCFHTTPVersion1_1)
         
@@ -190,13 +190,13 @@ public class WebSocket : NSObject, NSStreamDelegate {
         }
         self.addHeader(urlRequest, key: headerWSVersionName, val: headerWSVersionValue)
         self.addHeader(urlRequest, key: headerWSKeyName, val: self.generateWebSocketKey())
-        self.addHeader(urlRequest, key: headerOriginName, val: url.absoluteString!)
+        self.addHeader(urlRequest, key: headerOriginName, val: url.absoluteString)
         self.addHeader(urlRequest, key: headerWSHostName, val: "\(url.host!):\(port!)")
         for (key,value) in headers {
             self.addHeader(urlRequest, key: key, val: value)
         }
         
-        let serializedRequest: NSData = CFHTTPMessageCopySerializedMessage(urlRequest.takeUnretainedValue()).takeUnretainedValue()
+        let serializedRequest: NSData = CFHTTPMessageCopySerializedMessage(urlRequest.takeUnretainedValue())!.takeUnretainedValue()
         self.initStreamsWithData(serializedRequest, Int(port!))
     }
     //Add a header to the CFHTTPMessage by using the NSString bridges to CFString
@@ -216,7 +216,7 @@ public class WebSocket : NSObject, NSStreamDelegate {
             key += "\(Character(uni))"
         }
         var data = key.dataUsingEncoding(NSUTF8StringEncoding)
-        var baseKey = data?.base64EncodedStringWithOptions(NSDataBase64EncodingOptions(0))
+        var baseKey = data?.base64EncodedStringWithOptions(NSDataBase64EncodingOptions(rawValue: 0))
         return baseKey!
     }
     //Start the stream connection and write the data to the output stream
@@ -379,13 +379,13 @@ public class WebSocket : NSObject, NSStreamDelegate {
     
     ///validates the HTTP is a 101 as per the RFC spec
     private func validateResponse(buffer: UnsafePointer<UInt8>, bufferLen: Int) -> Bool {
-        let response = CFHTTPMessageCreateEmpty(kCFAllocatorDefault, 0)
+        let response = CFHTTPMessageCreateEmpty(kCFAllocatorDefault, false)
         CFHTTPMessageAppendBytes(response.takeUnretainedValue(), buffer, bufferLen)
         if CFHTTPMessageGetResponseStatusCode(response.takeUnretainedValue()) != 101 {
             return false
         }
         let cfHeaders = CFHTTPMessageCopyAllHeaderFields(response.takeUnretainedValue())
-        let headers: NSDictionary = cfHeaders.takeUnretainedValue()
+        let headers: NSDictionary = cfHeaders!.takeUnretainedValue()
         let acceptKey = headers[headerWSAcceptName] as! NSString
         if acceptKey.length > 0 {
             return true
